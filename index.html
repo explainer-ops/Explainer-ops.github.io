@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f7f5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Routine">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Routine</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--line:#ddd;--text:#151515;--muted:#737373;--accent:#151515}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit}button{cursor:pointer}.app{max-width:760px;margin:auto;min-height:100vh;padding-bottom:80px}
+header{position:sticky;top:0;z-index:10;background:rgba(247,247,245,.96);backdrop-filter:blur(12px);padding:calc(16px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--line)}
+.brand{font-size:22px;font-weight:700;letter-spacing:-.3px}.sub{font-size:12px;color:var(--muted);margin-top:3px}
+.tabs{display:flex;overflow:auto;gap:3px;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:79px;z-index:9;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tab{border:0;background:transparent;color:var(--muted);padding:8px 11px;border-radius:8px;white-space:nowrap;font-size:13px}.tab.active{background:#fff;color:var(--text);box-shadow:0 1px 3px #0001;font-weight:650}
+main{padding:17px 15px}.head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:13px}.head h1{font-size:20px;margin:0;letter-spacing:-.2px}.count{font-size:12px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px;margin:9px 0}.task{display:grid;grid-template-columns:26px 1fr auto;gap:9px;align-items:start}.check{width:19px;height:19px;margin-top:2px;accent-color:#111}.title{font-size:15px;font-weight:600}.done .title{text-decoration:line-through;color:#888}.meta{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}.time{color:#444;font-variant-numeric:tabular-nums}.link{display:inline-block;color:#315f9e;text-decoration:none;font-size:12px;margin-top:7px}.actions{display:flex;gap:6px;flex-wrap:wrap}.iconbtn,.btn{border:1px solid #ccc;background:#fff;border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px}.primary{background:#111;color:#fff;border-color:#111}.danger{color:#a00}
+.notice{background:#efefec;border:1px solid #d5d5d1;border-radius:11px;padding:12px;margin:0 0 14px}.notice strong{font-size:13px}.notice p{margin:4px 0 10px;font-size:12px;color:var(--muted);line-height:1.4}
+.empty{text-align:center;padding:36px 12px;border:1px dashed #ccc;border-radius:12px;color:var(--muted);font-size:13px}.section-note{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px}
+.modal{position:fixed;inset:0;background:#0005;display:none;align-items:flex-end;z-index:50}.modal.open{display:flex}.sheet{width:100%;max-width:760px;margin:auto;background:#fff;border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}.sheet h2{margin:0 0 15px;font-size:18px}
+.field{margin:11px 0}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}.field input,.field textarea,.field select{width:100%;border:1px solid #ccc;border-radius:8px;padding:10px;background:#fff;color:#111}.field textarea{min-height:80px;resize:vertical}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.install{display:none}.install.show{display:block}
+@media(min-width:700px){.tabs{top:77px}.sheet{border-radius:14px;margin-bottom:20px}.modal{align-items:center}.app{padding-bottom:30px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="brand">Routine</div><div class="sub" id="date"></div></header>
+<nav class="tabs" id="tabs"></nav>
+<main id="main"></main>
+</div>
+
+<div class="modal" id="taskModal"><div class="sheet">
+<h2 id="taskHeading">Add task</h2><input type="hidden" id="taskId"><input type="hidden" id="taskDay">
+<div class="field"><label>Task / goal / exercise</label><input id="taskTitle" placeholder="e.g. Sprint workout"></div>
+<div class="two"><div class="field"><label>Start time</label><input id="taskTime" type="time"></div><div class="field"><label>Duration (minutes)</label><input id="taskDuration" type="number" min="0" value="30"></div></div>
+<div class="field"><label>Notes / instructions</label><textarea id="taskNotes"></textarea></div>
+<div class="field"><label>How-to / reference link</label><input id="taskLink" type="url" placeholder="https://..."></div>
+<div class="modal-actions"><button class="btn" onclick="closeModal('taskModal')">Cancel</button><button class="btn primary" onclick="saveTask()">Save</button></div>
+</div></div>
+
+<div class="modal" id="basicModal"><div class="sheet">
+<h2 id="basicHeading">Add basic goal</h2><input type="hidden" id="basicId">
+<div class="field"><label>Goal</label><input id="basicTitle" placeholder="e.g. Drink water"></div>
+<div class="field"><label>Target / note</label><input id="basicNote" placeholder="e.g. Daily target"></div>
+<div class="modal-actions"><button class="btn" onclick="closeModal('basicModal')">Cancel</button><button class="btn primary" onclick="saveBasic()">Save</button></div>
+</div></div>
+
+<div class="modal" id="shiftModal"><div class="sheet">
+<h2>Adjust today's schedule</h2>
+<div class="section-note">Log unexpected time that was lost. The original routine stays intact; the app temporarily shifts this day's scheduled items. Multiple interruptions accumulate.</div>
+<div class="field"><label>Minutes lost</label><input id="shiftMinutes" type="number" min="1" value="15"></div>
+<div class="modal-actions"><button class="btn" onclick="closeModal('shiftModal')">Cancel</button><button class="btn primary" onclick="applyShift()">Shift schedule</button></div>
+</div></div>
+
+<script>
+const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const KEY="routine_pwa_v2";
+let data=load(),current="Basics";
+function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x)return x}catch(e){}return{basics:[
+{id:uid(),title:"Drink water",note:"Daily target"},
+{id:uid(),title:"Sleep",note:"Follow your planned sleep window"}],tasks:Object.fromEntries(DAYS.map(d=>[d,[]])),shifts:{},checked:{}}}
+function uid(){return crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random()}
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function todayKey(){let d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function dayName(){return DAYS[(new Date().getDay()+6)%7]}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function mins(t){let [h,m]=t.split(":").map(Number);return h*60+m}
+function tstr(n){n=((n%1440)+1440)%1440;return String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0")}
+function checked(id){return !!data.checked[todayKey()+"_"+id]}
+function toggle(id){let k=todayKey()+"_"+id;data.checked[k]=!data.checked[k];save();render()}
+function shift(day){return data.shifts[day]||0}
+function effective(task,day){return task.time+shift(day)}
+function cleanup(){let p=todayKey()+"_";for(const k of Object.keys(data.checked)){if(!k.startsWith(p))delete data.checked[k]};save()}
+function renderTabs(){document.getElementById("tabs").innerHTML=`<button class="tab ${current==="Basics"?"active":""}" onclick="select('Basics')">Basics</button>`+DAYS.map(d=>`<button class="tab ${current===d?"active":""}" onclick="select('${d}')">${d}</button>`).join("")}
+function select(x){current=x;renderTabs();render()}
+function render(){document.getElementById("date").textContent=new Intl.DateTimeFormat(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"}).format(new Date());current==="Basics"?renderBasics():renderDay(current)}
+function renderBasics(){document.getElementById("main").innerHTML=`<div class="head"><div><h1>Stable goals</h1><div class="count">Repeat every day</div></div><button class="btn primary" onclick="openBasic()">+ Add</button></div><div class="section-note">These stay the same every day. Checkmarks reset automatically for the next day.</div>${data.basics.length?data.basics.map(b=>`<div class="card"><div class="task"><input class="check" type="checkbox" ${checked(b.id)?"checked":""} onchange="toggle('${b.id}')"><div class="${checked(b.id)?"done":""}"><div class="title">${esc(b.title)}</div><div class="meta">${esc(b.note)}</div></div><button class="iconbtn" onclick="openBasic('${b.id}')">Edit</button></div></div>`).join(""):`<div class="empty">No recurring goals yet.</div>`}`}
+function renderDay(day){let tasks=[...(data.tasks[day]||[])].sort((a,b)=>effective(a,day)-effective(b,day));let sh=shift(day);document.getElementById("main").innerHTML=`<div class="head"><div><h1>${day}</h1><div class="count">${tasks.length} scheduled item${tasks.length===1?"":"s"}${sh?" · shifted +"+sh+" min":""}</div></div><button class="btn primary" onclick="openTask('${day}')">+ Add</button></div>${sh?`<div class="notice"><strong>Schedule adjusted +${sh} minutes</strong><p>Your original times are preserved. The displayed schedule is temporarily shifted.</p><div class="actions"><button class="btn" onclick="resetShift('${day}')">Reset adjustment</button></div></div>`:""}${tasks.length?tasks.map(t=>`<div class="card"><div class="task"><input class="check" type="checkbox" ${checked(t.id)?"checked":""} onchange="toggle('${t.id}')"><div class="${checked(t.id)?"done":""}"><div class="title">${esc(t.title)}</div><div class="meta"><span class="time">${tstr(effective(t,day))}</span>${t.duration?` · ${t.duration} min`:""}${t.notes?` · ${esc(t.notes)}`:""}</div>${t.link?`<a class="link" href="${esc(t.link)}" target="_blank" rel="noopener">Open instructions / link</a>`:""}</div><div class="actions"><button class="iconbtn" onclick="openTask('${day}','${t.id}')">Edit</button></div></div></div>`).join(""):`<div class="empty">No routine set for ${day}.</div>`}<div class="card"><div class="title">Unexpected interruption</div><div class="meta">Enter lost time and the day's displayed schedule moves forward automatically.</div><div class="actions" style="margin-top:10px"><button class="btn" onclick="openShift('${day}')">Adjust schedule</button></div></div>`}
+function modal(id,on){document.getElementById(id).classList.add("open");if(on)on()}
+function closeModal(id){document.getElementById(id).classList.remove("open")}
+function openTask(day,id=""){let t=id?(data.tasks[day]||[]).find(x=>x.id===id):null;document.getElementById("taskId").value=id;document.getElementById("taskDay").value=day;document.getElementById("taskHeading").textContent=t?"Edit task":"Add task";document.getElementById("taskTitle").value=t?.title||"";document.getElementById("taskTime").value=t?.time!=null?tstr(t.time):"09:00";document.getElementById("taskDuration").value=t?.duration??30;document.getElementById("taskNotes").value=t?.notes||"";document.getElementById("taskLink").value=t?.link||"";modal("taskModal")}
+function saveTask(){let day=document.getElementById("taskDay").value,id=document.getElementById("taskId").value,title=document.getElementById("taskTitle").value.trim();if(!title)return;let obj={id:id||uid(),title,time:mins(document.getElementById("taskTime").value||"09:00"),duration:+document.getElementById("taskDuration").value||0,notes:document.getElementById("taskNotes").value.trim(),link:document.getElementById("taskLink").value.trim()};data.tasks[day]??=[];let i=data.tasks[day].findIndex(x=>x.id===id);i>=0?data.tasks[day][i]=obj:data.tasks[day].push(obj);save();closeModal("taskModal");render()}
+function openBasic(id=""){let b=id?data.basics.find(x=>x.id===id):null;document.getElementById("basicId").value=id;document.getElementById("basicHeading").textContent=b?"Edit basic goal":"Add basic goal";document.getElementById("basicTitle").value=b?.title||"";document.getElementById("basicNote").value=b?.note||"";modal("basicModal")}
+function saveBasic(){let id=document.getElementById("basicId").value,title=document.getElementById("basicTitle").value.trim();if(!title)return;let b={id:id||uid(),title,note:document.getElementById("basicNote").value.trim()},i=data.basics.findIndex(x=>x.id===id);i>=0?data.basics[i]=b:data.basics.push(b);save();closeModal("basicModal");render()}
+function openShift(day){document.getElementById("shiftModal").dataset.day=day;document.getElementById("shiftMinutes").value=15;modal("shiftModal")}
+function applyShift(){let day=document.getElementById("shiftModal").dataset.day,n=Math.max(1,+document.getElementById("shiftMinutes").value||0);data.shifts[day]=(data.shifts[day]||0)+n;save();closeModal("shiftModal");render()}
+function resetShift(day){data.shifts[day]=0;save();render()}
+cleanup();renderTabs();render();
+</script>
+</body></html>
